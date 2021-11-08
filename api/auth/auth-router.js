@@ -2,6 +2,8 @@ const router = require("express").Router();
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const { jwtSecret } = require("./secrets");
+const User = require("./users-model");
+const { restart } = require("nodemon")
 
 const checkPayload = (req, res, next) => {
   if (!req.body.username || !req.body.password) {
@@ -11,7 +13,7 @@ const checkPayload = (req, res, next) => {
   }
 };
 
-checkForUsername = async (req, res, next) => {
+const checkForUsername = async (req, res, next) => {
   try {
     const rows = await User.findBy({ username: req.body.username });
     if (!rows.length) {
@@ -24,7 +26,7 @@ checkForUsername = async (req, res, next) => {
   }
 };
 
-checkIfUserExists = async (req, res, next) => {
+checkUserExists = async (req, res, next) => {
   try {
     const rows = await User.findBy({ username: req.body.username });
     if (rows.length) {
@@ -39,6 +41,17 @@ checkIfUserExists = async (req, res, next) => {
 };
 
 router.post("/register", checkPayload, checkForUsername, async (req, res) => {
+  // let user = req.body;
+
+  // const rounds = process.env.BCRYPT_ROUNDS || 8;
+  // const hash = bcrypt.hashSync(user.password, rounds);
+
+  // user.password = hash;
+  // Users.add(user)
+  //   .then((saved) => {
+  //     res.status(201).json({ message: `Welcome, ${saved.username}` });
+  //   })
+  //   .catch(next);
   try {
     const rounds = process.env.BCRYPT_ROUNDS || 8;
     const hash = bcrypt.hashSync(req.body.password, 10);
@@ -78,7 +91,7 @@ router.post("/register", checkPayload, checkForUsername, async (req, res) => {
   */
 });
 
-router.post("/login", checkPayload, checkIfUserExists, (req, res) => {
+router.post("/login", checkPayload, checkUserExists, (req, res) => {
   try {
     const verified = bcrypt.compareSync(
       req.body.password,
