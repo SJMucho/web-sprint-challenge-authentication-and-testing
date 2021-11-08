@@ -1,9 +1,5 @@
 const db = require("../../data/dbConfig.js");
 
-function getId() {
-  return nanoid().slice(0, 5);
-}
-
 async function add(user) {
   const [id] = await db("users").insert(user, "id");
   return findById(id);
@@ -14,10 +10,11 @@ function findById(id) {
 }
 
 function findBy(filter) {
-  return;
+  return db("users").where(filter).orderBy("id");
 }
 
 module.exports = {
   add,
   findBy,
+  findById,
 };
