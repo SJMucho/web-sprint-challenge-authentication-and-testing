@@ -21,12 +21,12 @@ afterAll(async () => {
   await db.destroy();
 });
 
-// describe("endPoints", () => {
-//   describe("[POST] /register", () => {
-//     it("responds with new user", async () => {
-//       let res;
-//       res = await (await request(endPoints).post("/register")).send(moira);
-//       expect(res.body).toMatchObject({ id: 3, ...Moira });
-//     });
-//   });
-// });
+describe("endPoints", () => {
+  describe("[POST] /register", () => {
+    it("responds with new user", async () => {
+      let res;
+      res = await (await request(endPoints).post("/register")).send(moira);
+      expect(res.body).toMatchObject({ id: 3, ...Moira });
+    });
+  });
+});
