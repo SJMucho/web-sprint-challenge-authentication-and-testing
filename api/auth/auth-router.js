@@ -1,20 +1,54 @@
 const router = require("express").Router();
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
-const { jwtSecret } = require("../../config/secrets.js");
-const Jokes = require("./jokes/jokes-data");
+const { jwtSecret } = require("./secrets");
 
-router.post("/register", (req, res) => {
-  let user = req.body;
-
-  const rounds = process.env.BCRYPT_ROUNDS || 8;
-  const hash = bcrypt.hashSync(user.password, rounds);
-
-  user.password = hash;
-
-  if (!username || !password) {
-    res.status(401).json("Username and password required");
+const checkPayload = (req, res, next) => {
+  if (!req.body.username || !req.body.password) {
+    res.status(401).json("Username and password required!");
   } else {
+    next();
+  }
+};
+
+checkForUsername = async (req, res, next) => {
+  try {
+    const rows = await User.findBy({ username: req.body.username });
+    if (!rows.length) {
+      next();
+    } else {
+      res.status(401).json("Username taken");
+    }
+  } catch (err) {
+    res.status(500).json(`Server error: ${err.message}`);
+  }
+};
+
+checkIfUserExists = async (req, res, next) => {
+  try {
+    const rows = await User.findBy({ username: req.body.username });
+    if (rows.length) {
+      req.userData = rows[0];
+      next();
+    } else {
+      res.status(401).json("Invalid credentials");
+    }
+  } catch (err) {
+    res.status(401).json(`Server error: ${err.message}`);
+  }
+};
+
+router.post("/register", checkPayload, checkForUsername, async (req, res) => {
+  try {
+    const rounds = process.env.BCRYPT_ROUNDS || 8;
+    const hash = bcrypt.hashSync(req.body.password, 10);
+    const newUser = await User.add({
+      username: req.body.username,
+      password: hash,
+    });
+    res.status(201).json(newUser);
+  } catch (err) {
+    res.status(500).json(`Server error: ${err.message}`);
   }
 
   /*
@@ -44,8 +78,21 @@ router.post("/register", (req, res) => {
   */
 });
 
-router.post("/login", (req, res) => {
-  res.end("implement login, please!");
+router.post("/login", checkPayload, checkIfUserExists, (req, res) => {
+  try {
+    const verified = bcrypt.compareSync(
+      req.body.password,
+      req.userData.password
+    );
+    if (verified) {
+      req.session.user = req.userData.json(`Welcome ${req.userData.username}`);
+    } else {
+      res.status(401).json("Invalid credentials");
+    }
+  } catch (err) {
+    res.status(500).json(`Server error: ${err.message}`);
+  }
+
   /*
     IMPLEMENT
     You are welcome to build additional middlewares to help with the endpoint's functionality.
